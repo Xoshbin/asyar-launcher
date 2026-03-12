@@ -14,6 +14,8 @@
     "notification:allow-notify",
     "notification:default",
     "opener:allow-open-url",
+    "core:path:default",
+    "core:path:allow-resolve-directory",
     {
       "identifier": "opener:allow-open-path",
       "allow": [
@@ -23,8 +25,20 @@
         { "path": "/System/Library/CoreServices/Applications/*" }
       ]
     },
-    "fs:allow-exists",
-    "fs:allow-stat",
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [
+        { "path": "$APPDATA/extensions" },
+        { "path": "$APPDATA/extensions/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-stat",
+      "allow": [
+        { "path": "$APPDATA/extensions" },
+        { "path": "$APPDATA/extensions/**" }
+      ]
+    },
     {
       "identifier": "fs:allow-read-dir",
       "allow": [
@@ -80,9 +94,10 @@
     {
       "identifier": "shell:allow-execute",
       "allow": [
-        { "name": "git-clone", "cmd": "git", "args": ["clone", ".*", ".*"] },
+        { "name": "git-clone", "cmd": "git", "args": [{ "validator": ".*" }, { "validator": ".*" }, { "validator": ".*" }] },
         { "name": "npm-install", "cmd": "npm", "args": ["install"] },
-        { "name": "pnpm-install", "cmd": "pnpm", "args": ["install"] }
+        { "name": "pnpm-install", "cmd": "pnpm", "args": ["install"] },
+        { "name": "pnpm-build", "cmd": "pnpm", "args": ["run", "build"] }
       ]
     }
   ]
