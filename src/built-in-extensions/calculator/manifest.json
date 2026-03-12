@@ -1,0 +1,26 @@
+{
+  "id": "calculator",
+  "name": "Calculator",
+  "version": "1.0.0",
+  "description": "Perform quick calculations directly from the search",
+  "author": {
+    "name": "Asyar Team",
+    "email": "team@asyar.app"
+  },
+  "icon": "🧮",
+  "commands": [
+    {
+      "id": "calculator.calculate",
+      "name": "Calculate",
+      "description": "Calculate mathematical expressions",
+      "type": "command",
+      "mode": "result",
+      "keywords": ["calculate", "math", "calc", "="],
+      "icon": "🧮",
+      "isFallback": true
+    }
+  ],
+  "activationEvents": ["onCommand:calculator.calculate"],
+  "main": "dist/index.js",
+  "permissions": ["clipboard"]
+}
