@@ -4,6 +4,7 @@ import { ClipboardHistoryService } from './clipboard/clipboardHistoryService';
 import { applicationService } from './application/applicationsService';
 import extensionManager from './extension/extensionManager'; // Default export (instance)
 import { commandService } from './extension/commandService'; // Import commandService instance
+import * as asyarApi from 'asyar-api';
 import { searchQuery } from './search/stores/search'; // Import searchQuery store
 import { get } from 'svelte/store'; // Import get to read store value
 
@@ -18,6 +19,9 @@ export const appInitializer = {
     }
 
     try {
+      // Expose API to global scope for runtime extensions
+      (globalThis as any).__asyar_api__ = asyarApi;
+
       logService.info(`Application starting initialization...`);
 
       // Initialize performance service first

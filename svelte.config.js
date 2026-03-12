@@ -6,6 +6,7 @@ import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
+  extensions: [".svelte"],
   preprocess: vitePreprocess(),
   kit: {
     adapter: adapter(),
@@ -21,6 +22,9 @@ const config = {
       // the contents of a directory, not the directory itself
       // "my-directory/*": "path/to/my-directory/*",
     },
+  },
+  experimental: {
+    compileModule: false,
   },
 };
 

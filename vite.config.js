@@ -7,7 +7,21 @@ const host = process.env.TAURI_DEV_HOST;
 
 // https://vitejs.dev/config/
 export default defineConfig( ({
-  plugins: [sveltekit(), tailwindcss()],
+  plugins: [
+    {
+      name: "log-all-loads",
+      load(id) {
+        if (id.includes("index.js")) {
+          console.log("LOG: loading id:", id);
+        }
+      },
+    },
+    sveltekit(),
+    tailwindcss(),
+  ],
+  ssr: {
+    external: ["@sveltejs/kit"],
+  },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

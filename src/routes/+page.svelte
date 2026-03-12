@@ -8,7 +8,7 @@
   import SearchHeader from '../components/layout/SearchHeader.svelte';
   import { ResultsList } from '../components';
   import BottomActionBar from '../components/layout/BottomActionBar.svelte'; // Import new component
-  import extensionManager, { activeView, activeViewSearchable } from '../services/extension/extensionManager';
+  import extensionManager, { activeView, activeViewSearchable, isBuiltInExtension } from '../services/extension/extensionManager';
   import { applicationService } from '../services/application/applicationsService';
   import { actionService } from '../services/action/actionService';
   import { performanceService } from '../services/performance/performanceService';
@@ -22,6 +22,8 @@
   let searchInput: HTMLInputElement;
   let listContainer: HTMLDivElement;
   let loadedComponent: any = null;
+  let isRuntimeView = false;
+  let runtimeViewPath = '';
   let bottomActionBarInstance: BottomActionBar; // Instance for the new bar
   let searchItems: SearchResult[] = [];
   let localSearchValue = $searchQuery;
@@ -305,26 +307,80 @@
     searchQuery.set('');
     currentError = null;
     $isSearchLoading = true;
-    loadedComponent = null; // Clear previous component
+    loadedComponent = null; 
+    isRuntimeView = false;
+    runtimeViewPath = '';
+
     try {
-      logService.debug(`Loading view for path: ${viewPath}`);
-      const [extensionName, componentName] = viewPath.split('/');
-      let module;
-      try {
-        module = await import(/* @vite-ignore */ `../built-in-extensions/${extensionName}/${componentName}.svelte`);
-      } catch (e) {
-        module = await import(/* @vite-ignore */ `../extensions/${extensionName}/${componentName}.svelte`);
+      const [extensionId, componentName] = viewPath.split('/');
+      
+      if (isBuiltInExtension(extensionId)) {
+        logService.debug(`Loading built-in view for: ${viewPath}`);
+        const module = await import(/* @vite-ignore */ `../built-in-extensions/${extensionId}/${componentName}.svelte`);
+        if (!module || !module.default) throw new Error('Built-in view component not found');
+        loadedComponent = module.default;
+      } else {
+        logService.debug(`Loading runtime view for: ${viewPath}`);
+        isRuntimeView = true;
+        runtimeViewPath = viewPath;
       }
-      if (!module || !module.default) throw new Error('View component not found or invalid module');
-      loadedComponent = module.default;
-      setTimeout(() => searchInput?.focus(), 50); // Refocus after loading
+      
+      setTimeout(() => searchInput?.focus(), 50);
     } catch (error) {
       logService.error(`Failed to load view ${viewPath}: ${error}`);
       currentError = `Failed to load view: ${viewPath}`;
-      extensionManager.goBack(); // Go back if loading fails
+      extensionManager.goBack();
     } finally {
         $isSearchLoading = false;
     }
+  }
+
+  /**
+   * Svelte action to mount a runtime view into a DOM element
+   */
+  function mountViewAction(node: HTMLElement, path: string) {
+    let cleanup: (() => void) | undefined;
+
+    async function mount() {
+      try {
+        const [extensionId, viewName] = path.split('/');
+        const { runtimeLoader } = await import('../services/extension/runtimeLoader');
+        
+        // 1. Get manifest
+        const manifest = await runtimeLoader.loadManifestFromDisk(extensionId);
+        if (!manifest) throw new Error(`Manifest not found for ${extensionId}`);
+
+        // 2. Load the view bundle
+        // We expect windows to be built as JS bundles that export a mount function
+        const mountFn = await runtimeLoader.loadViewFromDisk(extensionId, viewName);
+        
+        if (typeof mountFn === 'function') {
+          // 3. Create context for the view
+          const { ExtensionBridge, ExtensionContext } = await import('asyar-api');
+          const bridge = ExtensionBridge.getInstance();
+          const context = new ExtensionContext(bridge.getServices(), bridge.getComponents());
+          context.setExtensionId(extensionId);
+
+          // 4. Mount
+          cleanup = await mountFn(node, context);
+        } else {
+          node.innerHTML = `<div class="p-4 text-red-500">View "${viewName}" does not export a mount function</div>`;
+        }
+      } catch (err) {
+        logService.error(`Error mounting runtime view: ${err}`);
+        node.innerHTML = `<div class="p-4 text-red-500">Error: ${err}</div>`;
+      }
+    }
+
+    mount();
+
+    return {
+      destroy() {
+        if (typeof cleanup === 'function') {
+          cleanup();
+        }
+      }
+    };
   }
 
   async function handleSearch(query: string) {
@@ -426,10 +482,14 @@
   <div class="flex-1 relative">
     <!-- Main Content Area -->
     <div class="absolute inset-0 pb-10 overflow-y-auto"> <!-- Adjusted padding-bottom -->
-      {#if $activeView && loadedComponent}
-        <div class="min-h-full" data-extension-view={$activeView}>
-          <svelte:component this={loadedComponent} />
-        </div>
+      {#if $activeView}
+        {#if loadedComponent}
+          <div class="extension-view h-full w-full">
+            <svelte:component this={loadedComponent} />
+          </div>
+        {:else if isRuntimeView && runtimeViewPath}
+          <div class="extension-view h-full w-full" use:mountViewAction={runtimeViewPath}></div>
+        {/if}
       {:else}
         <!-- Main Search Results / No View Active -->
         <div class="min-h-full">

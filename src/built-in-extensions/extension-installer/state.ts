@@ -6,6 +6,9 @@ import type {
   IExtensionManager,
 } from "asyar-api";
 import { invoke } from "@tauri-apps/api/core";
+import { appDataDir, join } from "@tauri-apps/api/path";
+import { exists, mkdir, readTextFile } from "@tauri-apps/plugin-fs";
+import { Command } from "@tauri-apps/plugin-shell";
 
 interface ExtensionInstallerState {
   url: string;
@@ -114,9 +117,9 @@ function createExtensionInstallerState() {
     }));
 
     try {
-      // Create installed-extensions directory if it doesn't exist
-      const appDirPath = await appDir();
-      const extensionsDir = `${appDirPath}installed-extensions`;
+      // Create extensions directory if it doesn't exist
+      const appDirPath = await appDataDir();
+      const extensionsDir = await join(appDirPath, "extensions");
 
       if (!(await exists(extensionsDir))) {
         await createDir(extensionsDir, { recursive: true });
@@ -156,7 +159,7 @@ function createExtensionInstallerState() {
           update((state) => ({
             ...state,
             isLoading: false,
-            error: result.error,
+            error: result.error || "Installation failed",
             success: null,
           }));
 
@@ -166,7 +169,7 @@ function createExtensionInstallerState() {
             success: false,
           });
 
-          return { success: false, message: result.error };
+          return { success: false, message: result.error || "Installation failed" };
         }
       } else if (url.includes("asyar.org")) {
         // Handle asyar.org specific downloads
@@ -219,10 +222,8 @@ function createExtensionInstallerState() {
       }
 
       // Check if destination directory already exists
-      const extensionPath = `${extensionsDir}/${repoName}`;
-      const exists = await invoke("check_path_exists", { path: extensionPath });
-
-      if (exists) {
+      const extensionPath = await join(extensionsDir, repoName);
+      if (await exists(extensionPath)) {
         return {
           success: false,
           error: `Extension '${repoName}' already exists`,
@@ -230,7 +231,7 @@ function createExtensionInstallerState() {
       }
 
       // Clone the repository using git command
-      const output = await new Command("git", [
+      const output = await Command.create("git-clone", [
         "clone",
         url,
         extensionPath,
@@ -241,18 +242,37 @@ function createExtensionInstallerState() {
         return { success: false, error: `Git clone failed: ${output.stderr}` };
       }
 
-      // Install npm dependencies
-      const npmOutput = await new Command("npm", ["install"], {
-        cwd: extensionPath,
-      }).execute();
-
-      if (npmOutput.code !== 0) {
-        logService?.error(`npm install failed: ${npmOutput.stderr}`);
+      // Verify manifest exists
+      const manifestPath = await join(extensionPath, "manifest.json");
+      if (!(await exists(manifestPath))) {
+        logService?.error(`Extension cloned but manifest.json not found in ${repoName}`);
         return {
-          success: true,
-          name: repoName,
-          error: `Extension cloned but dependencies installation failed: ${npmOutput.stderr}`,
+          success: false,
+          error: `Invalid extension: manifest.json not found in the repository root.`,
         };
+      }
+
+      // 4. Install dependencies and build if package.json exists
+      const packageJsonPath = await join(extensionPath, "package.json");
+      if (await exists(packageJsonPath)) {
+        logService?.info(`Installing dependencies for ${repoName}...`);
+        const installOutput = await Command.create("pnpm-install", ["install"], {
+          cwd: extensionPath,
+        }).execute();
+
+        if (installOutput.code !== 0) {
+          logService?.error(`pnpm install failed for ${repoName}: ${installOutput.stderr}`);
+          // Don't fail the whole installation, user might have pre-built dist
+        } else {
+          logService?.info(`Building ${repoName}...`);
+          const buildOutput = await Command.create("pnpm-build", ["run", "build"], {
+            cwd: extensionPath,
+          }).execute();
+          
+          if (buildOutput.code !== 0) {
+            logService?.error(`pnpm build failed for ${repoName}: ${buildOutput.stderr}`);
+          }
+        }
       }
 
       return { success: true, name: repoName };
@@ -309,14 +329,14 @@ function createExtensionInstallerState() {
 }
 
 export const extensionInstallerState = createExtensionInstallerState();
-function appDir() {
-  throw new Error("Function not implemented.");
+async function appDir() {
+  return await appDataDir();
 }
 
-function exists(extensionsDir: string) {
-  throw new Error("Function not implemented.");
+async function existsHelper(path: string) {
+  return await exists(path);
 }
 
-function createDir(extensionsDir: string, arg1: { recursive: boolean }) {
-  throw new Error("Function not implemented.");
+async function createDir(path: string, options: { recursive: boolean }) {
+  return await mkdir(path, options);
 }

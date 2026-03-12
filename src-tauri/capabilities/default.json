@@ -2,86 +2,70 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main", "settings"],
+  "windows": ["main"],
   "permissions": [
     "autostart:allow-enable",
     "autostart:allow-disable",
     "autostart:allow-is-enabled",
-    "clipboard-manager:allow-clear",
-    "clipboard-manager:allow-read-image",
     "clipboard-manager:allow-read-text",
-    "clipboard-manager:allow-write-html",
-    "clipboard-manager:allow-write-image",
     "clipboard-manager:allow-write-text",
-    "core:default",
-    "opener:default",
-    "opener:allow-open-url",
-    "opener:allow-default-urls",
+    "clipboard-manager:allow-read-image",
     "log:default",
+    "notification:allow-notify",
     "notification:default",
-    "notification:allow-create-channel",
-    "notification:allow-list-channels",
-    "notification:allow-request-permission",
-    "notification:allow-register-action-types",
-    "notification:allow-show",
+    "opener:allow-open-url",
     {
       "identifier": "opener:allow-open-path",
       "allow": [
-        {
-          "path": "/Applications/*"
-        },
-        {
-          "path": "/Applications/*.app/**"
-        },
-        {
-          "path": "/System/Applications/*"
-        },
-        {
-          "path": "/System/Applications/*.app/**"
-        },
-        {
-          "path": "/System/Applications/Safari.app"
-        },
-        {
-          "path": "/System/Applications/Safari.app/**"
-        },
-        {
-          "path": "/Applications/Safari.app"
-        },
-        {
-          "path": "/Applications/Safari.app/**"
-        }
+        { "path": "/Applications/*" },
+        { "path": "/System/Applications/*" },
+        { "path": "/System/Library/PreferencePanes/*" },
+        { "path": "/System/Library/CoreServices/Applications/*" }
       ]
     },
-    "fs:default",
+    "fs:allow-exists",
+    "fs:allow-stat",
     {
       "identifier": "fs:allow-read-dir",
       "allow": [
-        {
-          "path": "$APP/src/extensions"
-        },
-        {
-          "path": "$APP/src/extensions/**"
-        }
+        { "path": "$APP/src/built-in-extensions" },
+        { "path": "$APP/src/built-in-extensions/**" },
+        { "path": "$APPDATA/extensions" },
+        { "path": "$APPDATA/extensions/**" }
       ]
     },
     {
       "identifier": "fs:allow-read-text-file",
       "allow": [
-        {
-          "path": "$APP/src/extensions/*/manifest.json"
-        }
+        { "path": "$APP/src/built-in-extensions/*/manifest.json" },
+        { "path": "$APPDATA/extensions/**/manifest.json" },
+        { "path": "$APPDATA/extensions/**/*.js" }
       ]
     },
     {
       "identifier": "fs:allow-read-file",
       "allow": [
-        {
-          "path": "$APP/src/extensions/*/manifest.json"
-        },
-        {
-          "path": "$APP/src/extensions/*/index.ts"
-        }
+        { "path": "$APP/src/built-in-extensions/*/manifest.json" },
+        { "path": "$APPDATA/extensions/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-mkdir",
+      "allow": [
+        { "path": "$APPDATA/extensions" },
+        { "path": "$APPDATA/extensions/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-write-file",
+      "allow": [
+        { "path": "$APPDATA/extensions/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-remove",
+      "allow": [
+        { "path": "$APPDATA/extensions/**" }
       ]
     },
     "store:allow-set",
@@ -92,6 +76,14 @@
     "global-shortcut:allow-register",
     "global-shortcut:allow-is-registered",
     "global-shortcut:allow-unregister",
-    "global-shortcut:allow-unregister-all"
+    "global-shortcut:allow-unregister-all",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        { "name": "git-clone", "cmd": "git", "args": ["clone", ".*", ".*"] },
+        { "name": "npm-install", "cmd": "npm", "args": ["install"] },
+        { "name": "pnpm-install", "cmd": "pnpm", "args": ["install"] }
+      ]
+    }
   ]
 }

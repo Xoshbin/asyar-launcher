@@ -11,7 +11,8 @@ import type {
   IExtensionManager,
   ExtensionCommand,
 } from "asyar-api";
-import { discoverExtensions, isBuiltInExtension } from "./extensionDiscovery"; // Re-added discoverExtensions
+import { discoverExtensions, isBuiltInExtension } from "./extensionDiscovery";
+export { discoverExtensions, isBuiltInExtension };
 import { ExtensionBridge } from "asyar-api";
 import { logService } from "../log/logService";
 import { extensionLoaderService } from "../extensionLoaderService"; // Import the new loader service (correct path)
@@ -288,6 +289,13 @@ export class ExtensionManager implements IExtensionManager {
     }
 
     logService.info("Extensions unloaded and state cleared.");
+  }
+
+  async refreshExtensions(): Promise<void> {
+    logService.info("Refreshing all extensions...");
+    await this.unloadExtensions();
+    await this.loadExtensions();
+    await this.syncCommandIndex();
   }
 
   // Updated loadExtensions to use the service
@@ -778,11 +786,12 @@ export class ExtensionManager implements IExtensionManager {
       // Check if extension is enabled and has a search method
       if (
         this.isExtensionEnabled(id) &&
+        extension.search &&
         typeof extension.search === "function"
       ) {
         searchPromises.push(
-          Promise.resolve() // Ensure it's always a promise
-            .then(() => extension.search(query))
+          Promise.resolve()
+            .then(() => extension.search!(query))
             .then((results) => {
               // Add extensionId to each result for context if needed later
               return results.map((res) => ({ ...res, extensionId: id }));
@@ -876,55 +885,9 @@ export class ExtensionManager implements IExtensionManager {
   }
 
   private async getExtensionsDirectory(): Promise<string> {
-    // Determine mode first
-    const isDev = import.meta.env.MODE === 'development';
-
-    if (isDev) {
-      logService.debug("Determining extensions directory for development mode...");
-      try {
-        const resDir = await resourceDir();
-        // Use non-null assertion as workaround
-        const projectRoot = await join!(resDir, "..", "..", "..");
-        const devExtensionsPath = await join!(projectRoot, "extensions");
-        logService.warn(
-          `Using development path for extensions: ${devExtensionsPath}`
-        );
-        return devExtensionsPath;
-      } catch (devError) {
-        logService.error(`Failed to determine dev extensions directory: ${devError}. Trying fallback...`);
-        // Fallback for dev (less likely needed, but for safety)
-        try {
-           const resourceDirectory = await resourceDir();
-           // Use non-null assertion as workaround
-           return await join!(resourceDirectory, "_up_/", "extensions");
-        } catch (fallbackError) {
-           logService.error(`Dev fallback failed: ${fallbackError}. Cannot determine extensions directory.`);
-           throw new Error("Could not determine dev extensions directory.");
-        }
-      }
-    } else {
-      logService.debug("Determining extensions directory for production mode...");
-      try {
-        const appDataDirPath = await appDataDir();
-        // Use non-null assertion as workaround
-        const prodExtensionsPath = await join!(appDataDirPath, "extensions");
-        logService.info(`Using production path for extensions: ${prodExtensionsPath}`);
-        return prodExtensionsPath;
-      } catch (prodError) {
-         logService.error(`Failed to determine prod extensions directory using appDataDir: ${prodError}. Trying fallback...`);
-         // Fallback for production (using resourceDir relative path)
-         try {
-            const resourceDirectory = await resourceDir();
-            // Use non-null assertion as workaround
-            const fallbackPath = await join!(resourceDirectory, "_up_/", "extensions");
-            logService.warn(`Using production fallback path for extensions: ${fallbackPath}`);
-            return fallbackPath;
-         } catch (fallbackError) {
-            logService.error(`Prod fallback failed: ${fallbackError}. Cannot determine extensions directory.`);
-            throw new Error("Could not determine prod extensions directory.");
-         }
-      }
-    }
+    const appDataDirPath = await appDataDir();
+    const prodExtensionsPath = await join(appDataDirPath, "extensions");
+    return prodExtensionsPath;
   }
 
   // Removed: getExtensionId(extension: Extension): string | undefined

@@ -1,8 +1,7 @@
 import { logService } from "../log/logService";
 import type { ExtensionManifest } from "asyar-api";
 
-// Import both regular and built-in extensions
-const extensionContext = import.meta.glob("../../extensions/*/manifest.json");
+// Import built-in extensions via build-time glob
 const builtInExtensionContext = import.meta.glob(
   "../../built-in-extensions/*/manifest.json"
 );
@@ -13,26 +12,12 @@ export interface ExtensionIndex {
   path: string;
   manifest: ExtensionManifest;
   loaded: boolean;
+  isInstalled?: boolean; // True if loaded from appDataDir at runtime
 }
 
 export async function discoverExtensions(): Promise<string[]> {
   try {
-    // Get all extension paths from both directories
-    const extensionPaths = Object.keys(extensionContext);
     const builtInExtensionPaths = Object.keys(builtInExtensionContext);
-
-    // Log the discovered paths for debugging
-    logService.debug(
-      `Found ${extensionPaths.length} regular extensions and ${builtInExtensionPaths.length} built-in extensions`
-    );
-
-    // Extract just the extension IDs (names) from the paths
-    const regularExtensionIds = extensionPaths
-      .map((path) => {
-        const matches = path.match(/\/extensions\/([^\/]+)\/manifest\.json/);
-        return matches ? matches[1] : null;
-      })
-      .filter((id) => id !== null);
 
     const builtInExtensionIds = builtInExtensionPaths
       .map((path) => {
@@ -41,16 +26,19 @@ export async function discoverExtensions(): Promise<string[]> {
         );
         return matches ? matches[1] : null;
       })
-      .filter((id) => id !== null);
+      .filter((id) => id !== null) as string[];
 
-    // Combine and return just the extension IDs
-    const allExtensionIds = [
-      ...regularExtensionIds,
+    // Import runtime discovery (dynamic import to avoid circular dependency if any)
+    const { runtimeLoader } = await import("./runtimeLoader");
+    const installedIds = await runtimeLoader.discoverInstalledExtensions();
+
+    const allExtensionIds = Array.from(new Set([
       ...builtInExtensionIds,
-    ] as string[];
+      ...installedIds
+    ]));
 
     logService.info(
-      `Discovered ${allExtensionIds.length} extensions (${builtInExtensionIds.length} built-in)`
+      `Discovered ${allExtensionIds.length} extensions (${builtInExtensionIds.length} built-in, ${installedIds.length} installed)`
     );
 
     return allExtensionIds;
@@ -74,6 +62,7 @@ export function getExtensionPath(extensionId: string): string {
   if (isBuiltInExtension(extensionId)) {
     return `../../built-in-extensions/${extensionId}`;
   } else {
+    // This will now only be used for dev or fallbacks until runtime path is resolved
     return `../../extensions/${extensionId}`;
   }
 }
@@ -84,31 +73,42 @@ export async function indexExtensions(): Promise<ExtensionIndex[]> {
     const extensionIds = await discoverExtensions();
     const extensionIndexes: ExtensionIndex[] = [];
 
+    const { runtimeLoader } = await import("./runtimeLoader");
     for (const id of extensionIds) {
       try {
         const isBuiltIn = isBuiltInExtension(id);
-        const path = isBuiltIn
-          ? `../../built-in-extensions/${id}`
-          : `../../extensions/${id}`;
+        let manifest: ExtensionManifest | null = null;
+        let path = "";
 
-        // Only load the manifest file
-        const manifest = await import(
-          /* @vite-ignore */ `${path}/manifest.json`
-        );
+        if (isBuiltIn) {
+          path = `../../built-in-extensions/${id}`;
+          // Built-in manifests are bundled and can be imported directly
+          const manifestModule = await import(
+            /* @vite-ignore */ `${path}/manifest.json`
+          );
+          manifest = (manifestModule.default || manifestModule) as ExtensionManifest;
+        } else {
+          path = await runtimeLoader.getExtensionsDir();
+          // Runtime manifests must be read from disk
+          manifest = await runtimeLoader.loadManifestFromDisk(id);
+        }
 
-        // Create index entry
-        extensionIndexes.push({
-          id,
-          path,
-          manifest,
-          loaded: false,
-        });
+        if (manifest) {
+          // Create index entry
+          extensionIndexes.push({
+            id,
+            path: isBuiltIn ? path : `${path}/${id}`,
+            manifest,
+            loaded: false,
+            isInstalled: !isBuiltIn
+          });
 
-        logService.debug(
-          `Indexed extension: ${manifest.name} (${id}) - ${
-            isBuiltIn ? "built-in" : "regular"
-          }`
-        );
+          logService.debug(
+            `Indexed extension: ${manifest.name} (${id}) - ${
+              isBuiltIn ? "built-in" : "runtime"
+            }`
+          );
+        }
       } catch (error) {
         logService.error(`Failed to index extension ${id}: ${error}`);
       }
