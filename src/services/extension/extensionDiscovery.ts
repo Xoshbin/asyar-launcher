@@ -28,6 +28,8 @@ export async function discoverExtensions(): Promise<string[]> {
       })
       .filter((id) => id !== null) as string[];
 
+    logService.info(`[DIAG] Built-in extensions found: ${builtInExtensionIds.join(", ")}`);
+
     // Import runtime discovery (dynamic import to avoid circular dependency if any)
     const { runtimeLoader } = await import("./runtimeLoader");
     const installedIds = await runtimeLoader.discoverInstalledExtensions();
@@ -38,7 +40,7 @@ export async function discoverExtensions(): Promise<string[]> {
     ]));
 
     logService.info(
-      `Discovered ${allExtensionIds.length} extensions (${builtInExtensionIds.length} built-in, ${installedIds.length} installed)`
+      `Discovery result: ${allExtensionIds.length} unique extensions identified (${builtInExtensionIds.length} built-in, ${installedIds.length} installed: ${installedIds.join(", ")})`
     );
 
     return allExtensionIds;

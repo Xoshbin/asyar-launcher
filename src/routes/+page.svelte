@@ -13,6 +13,8 @@
   import { actionService } from '../services/action/actionService';
   import { performanceService } from '../services/performance/performanceService';
   import { ClipboardHistoryService } from '../services/clipboard/clipboardHistoryService';
+  import ExtensionIframe from '../components/extension/ExtensionIframe.svelte';
+  import { runtimeLoader } from '../services/extension/runtimeLoader';
   import type { SearchResult } from '../services/search/interfaces/SearchResult';
   import type { ExtensionResult } from 'asyar-api';
   import { searchService } from '../services/search/SearchService';
@@ -402,7 +404,7 @@
         description: extRes.subtitle,
         type: 'command',
         score: extRes.score ?? 0.5,
-        action: undefined, // Action defined later in searchResultItemsMapped
+        action: extRes.onAction || (extRes as any).action, // Use original callback
         path: undefined,
         category: 'extension',
         extensionId: extRes.extensionId
@@ -488,7 +490,19 @@
             <svelte:component this={loadedComponent} />
           </div>
         {:else if isRuntimeView && runtimeViewPath}
-          <div class="extension-view h-full w-full" use:mountViewAction={runtimeViewPath}></div>
+          <div class="extension-view h-full w-full">
+            {#await runtimeLoader.generateIframeWrapper(runtimeViewPath.split('/')[0], runtimeViewPath.split('/')[1])}
+               <div class="p-4 text-center">Preparing extension sandbox...</div>
+            {:then html}
+              <ExtensionIframe 
+                path={runtimeViewPath} 
+                {html} 
+                extensionId={runtimeViewPath.split('/')[0]} 
+              />
+            {:catch error}
+               <div class="p-4 text-red-500">Failed to prepare extension: {error.message}</div>
+            {/await}
+          </div>
         {/if}
       {:else}
         <!-- Main Search Results / No View Active -->

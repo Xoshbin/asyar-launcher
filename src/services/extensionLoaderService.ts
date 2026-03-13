@@ -42,6 +42,7 @@ export const extensionLoaderService = {
 
     async loadSingleExtension(id: string): Promise<{ extension: Extension, manifest: ExtensionManifest } | null> {
         const isBuiltIn = isBuiltInExtension(id);
+        logService.debug(`Attempting to load extension: ${id} (isBuiltIn: ${isBuiltIn})`);
         
         if (isBuiltIn) {
             // Built-in extensions use Vite's dynamic import (bundled at build time)
@@ -63,6 +64,7 @@ export const extensionLoaderService = {
                 }
 
                 performanceService.stopTiming(`load-builtin:${id}`);
+                logService.info(`Loaded built-in extension: ${manifest.name} (${id})`);
                 return { extension, manifest };
             } catch (error) {
                 logService.error(`Failed to load built-in extension ${id}: ${error}`);
@@ -72,12 +74,15 @@ export const extensionLoaderService = {
             // Non-built-in extensions use runtimeLoader (loaded from disk at runtime)
             try {
                 performanceService.startTiming(`load-runtime:${id}`);
+                logService.debug(`Loading runtime extension: ${id}`);
+                
                 const manifest = await runtimeLoader.loadManifestFromDisk(id);
                 if (!manifest) {
                     logService.warn(`Manifest not found for installed extension ${id}`);
                     return null;
                 }
 
+                logService.debug(`Loaded manifest for ${id}: ${manifest.name}. Loading bundle...`);
                 const extension = await runtimeLoader.loadExtensionBundleFromDisk(id, manifest);
                 if (!extension) {
                     logService.error(`Failed to load bundle for installed extension ${id}`);
@@ -85,6 +90,7 @@ export const extensionLoaderService = {
                 }
 
                 performanceService.stopTiming(`load-runtime:${id}`);
+                logService.info(`Loaded installed extension: ${manifest.name} (${id})`);
                 return { extension, manifest };
             } catch (error) {
                 logService.error(`Failed to load runtime extension ${id}: ${error}`);

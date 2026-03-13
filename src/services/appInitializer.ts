@@ -22,6 +22,7 @@ export const appInitializer = {
       // Expose API to global scope for runtime extensions
       (globalThis as any).__asyar_api__ = asyarApi;
 
+      logService.custom("🚀 APP INITIALIZER: STARTING", "INIT", "magenta", "bgMagenta");
       logService.info(`Application starting initialization...`);
 
       // Initialize performance service first

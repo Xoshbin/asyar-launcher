@@ -33,17 +33,17 @@
         <!-- URL input form -->
         <div class="space-y-2">
           <label for="extension-url" class="block text-sm font-medium">
-            GitHub Repository URL or Asyar.org Extension URL
+            GitHub URL or Local Directory Path
           </label>
           <Input 
             id="extension-url"
             bind:value={url}
             on:input={handleUrlChange}
-            placeholder="https://github.com/username/extension"
+            placeholder="/Users/path/to/my-extension"
             fullWidth
           />
           <p class="text-xs text-gray-400">
-            Enter a GitHub repository URL. The extension will be cloned and installed.
+            Enter a GitHub URL or a local folder path. Local folders will be symbolically linked.
           </p>
         </div>
         

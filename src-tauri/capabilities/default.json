@@ -29,14 +29,19 @@
       "identifier": "fs:allow-exists",
       "allow": [
         { "path": "$APPDATA/extensions" },
-        { "path": "$APPDATA/extensions/**" }
+        { "path": "$APPDATA/extensions/**" },
+        { "path": "$APPDATA/extensions/**/.*" },
+        { "path": "$APPDATA/asyar-api" },
+        { "path": "$APPDATA/asyar-api/**" },
+        { "path": "/Users/khoshbin/develop/asyar/asyar-api" }
       ]
     },
     {
       "identifier": "fs:allow-stat",
       "allow": [
         { "path": "$APPDATA/extensions" },
-        { "path": "$APPDATA/extensions/**" }
+        { "path": "$APPDATA/extensions/**" },
+        { "path": "$APPDATA/extensions/**/.*" }
       ]
     },
     {
@@ -45,41 +50,65 @@
         { "path": "$APP/src/built-in-extensions" },
         { "path": "$APP/src/built-in-extensions/**" },
         { "path": "$APPDATA/extensions" },
-        { "path": "$APPDATA/extensions/**" }
+        { "path": "$APPDATA/extensions/**" },
+        { "path": "$APPDATA/asyar-api" },
+        { "path": "$APPDATA/asyar-api/**" }
       ]
     },
     {
       "identifier": "fs:allow-read-text-file",
       "allow": [
-        { "path": "$APP/src/built-in-extensions/*/manifest.json" },
-        { "path": "$APPDATA/extensions/**/manifest.json" },
-        { "path": "$APPDATA/extensions/**/*.js" }
+        { "path": "$APP/src/built-in-extensions/**" },
+        { "path": "$APPDATA/extensions/**" },
+        { "path": "$APPDATA/extensions/**/.*" },
+        { "path": "$APPDATA/asyar-api/**" },
+        { "path": "$APPDATA/asyar-api/**/.*" }
       ]
     },
     {
       "identifier": "fs:allow-read-file",
       "allow": [
-        { "path": "$APP/src/built-in-extensions/*/manifest.json" },
-        { "path": "$APPDATA/extensions/**" }
+        { "path": "$APP/src/built-in-extensions/**" },
+        { "path": "$APPDATA/extensions/**" },
+        { "path": "$APPDATA/extensions/**/.*" },
+        { "path": "$APPDATA/asyar-api/**" },
+        { "path": "$APPDATA/asyar-api/**/.*" }
       ]
     },
     {
       "identifier": "fs:allow-mkdir",
       "allow": [
         { "path": "$APPDATA/extensions" },
-        { "path": "$APPDATA/extensions/**" }
+        { "path": "$APPDATA/extensions/**" },
+        { "path": "$APPDATA/asyar-api" },
+        { "path": "$APPDATA/asyar-api/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [
+        { "path": "$APPDATA/extensions/**" },
+        { "path": "$APPDATA/extensions/**/.*" },
+        { "path": "$APPDATA/asyar-api/**" },
+        { "path": "$APPDATA/asyar-api/**/.*" }
       ]
     },
     {
       "identifier": "fs:allow-write-file",
       "allow": [
-        { "path": "$APPDATA/extensions/**" }
+        { "path": "$APPDATA/extensions/**" },
+        { "path": "$APPDATA/extensions/**/.*" },
+        { "path": "$APPDATA/asyar-api/**" },
+        { "path": "$APPDATA/asyar-api/**/.*" }
       ]
     },
     {
       "identifier": "fs:allow-remove",
       "allow": [
-        { "path": "$APPDATA/extensions/**" }
+        { "path": "$APPDATA/extensions/**" },
+        { "path": "$APPDATA/extensions/**/.*" },
+        { "path": "$APPDATA/asyar-api/**" },
+        { "path": "$APPDATA/asyar-api/**/.*" }
       ]
     },
     "store:allow-set",
@@ -94,10 +123,13 @@
     {
       "identifier": "shell:allow-execute",
       "allow": [
-        { "name": "git-clone", "cmd": "git", "args": [{ "validator": ".*" }, { "validator": ".*" }, { "validator": ".*" }] },
-        { "name": "npm-install", "cmd": "npm", "args": ["install"] },
-        { "name": "pnpm-install", "cmd": "pnpm", "args": ["install"] },
-        { "name": "pnpm-build", "cmd": "pnpm", "args": ["run", "build"] }
+        { "name": "git-clone", "cmd": "git", "args": [{ "validator": ".*" }, { "validator": ".*" }, { "validator": ".*" }, { "validator": ".*" }, { "validator": ".*" }] },
+        { "name": "npm-install", "cmd": "npm", "args": ["install", { "validator": ".*" }] },
+        { "name": "pnpm-add", "cmd": "pnpm", "args": ["add", { "validator": ".*" }, { "validator": ".*" }] },
+        { "name": "pnpm-install", "cmd": "pnpm", "args": ["install", { "validator": ".*" }] },
+        { "name": "pnpm-build", "cmd": "pnpm", "args": ["run", "build"] },
+        { "name": "ln-s", "cmd": "ln", "args": ["-s", { "validator": ".*" }, { "validator": ".*" }] },
+        { "name": "pnpm-generic", "cmd": "pnpm", "args": [{ "validator": ".*" }, { "validator": ".*" }, { "validator": ".*" }, { "validator": ".*" }] }
       ]
     }
   ]
