@@ -1,0 +1,46 @@
+
+> asyar@0.1.0 tauri /Users/khoshbin/develop/asyar
+> tauri dev
+
+     Running BeforeDevCommand (`pnpm dev`)
+     Running DevCommand (`cargo  run --no-default-features --color always --`)
+        Info Watching /Users/khoshbin/develop/asyar/src-tauri for changes...
+.../clipboard-history                    |  WARN  The field "pnpm.overrides" was found in /Users/khoshbin/develop/asyar/src/built-in-extensions/clipboard-history/package.json. This will not take effect. You should configure "pnpm.overrides" at the root of the workspace instead.
+src/built-in-extensions/store            |  WARN  The field "pnpm.overrides" was found in /Users/khoshbin/develop/asyar/src/built-in-extensions/store/package.json. This will not take effect. You should configure "pnpm.overrides" at the root of the workspace instead.
+
+> asyar@0.1.0 predev /Users/khoshbin/develop/asyar
+> pnpm build:extensions
+
+.../clipboard-history                    |  WARN  The field "pnpm.overrides" was found in /Users/khoshbin/develop/asyar/src/built-in-extensions/clipboard-history/package.json. This will not take effect. You should configure "pnpm.overrides" at the root of the workspace instead.
+src/built-in-extensions/store            |  WARN  The field "pnpm.overrides" was found in /Users/khoshbin/develop/asyar/src/built-in-extensions/store/package.json. This will not take effect. You should configure "pnpm.overrides" at the root of the workspace instead.
+
+> asyar@0.1.0 build:extensions /Users/khoshbin/develop/asyar
+> pnpm -r --filter "./src/extensions/*" run --if-present build
+
+.../clipboard-history                    |  WARN  The field "pnpm.overrides" was found in /Users/khoshbin/develop/asyar/src/built-in-extensions/clipboard-history/package.json. This will not take effect. You should configure "pnpm.overrides" at the root of the workspace instead.
+src/built-in-extensions/store            |  WARN  The field "pnpm.overrides" was found in /Users/khoshbin/develop/asyar/src/built-in-extensions/store/package.json. This will not take effect. You should configure "pnpm.overrides" at the root of the workspace instead.
+No projects matched the filters in "/Users/khoshbin/develop/asyar"
+
+> asyar@0.1.0 dev /Users/khoshbin/develop/asyar
+> pnpm build:extensions && vite dev
+
+[1m[92m   Compiling[0m asyar v0.1.0 (/Users/khoshbin/develop/asyar/src-tauri)
+[1m[96m    Building[0m [=======================> ] 585/588: asyar(build)                .../clipboard-history                    |  WARN  The field "pnpm.overrides" was found in /Users/khoshbin/develop/asyar/src/built-in-extensions/clipboard-history/package.json. This will not take effect. You should configure "pnpm.overrides" at the root of the workspace instead.
+src/built-in-extensions/store            |  WARN  The field "pnpm.overrides" was found in /Users/khoshbin/develop/asyar/src/built-in-extensions/store/package.json. This will not take effect. You should configure "pnpm.overrides" at the root of the workspace instead.
+
+> asyar@0.1.0 build:extensions /Users/khoshbin/develop/asyar
+> pnpm -r --filter "./src/extensions/*" run --if-present build
+
+.../clipboard-history                    |  WARN  The field "pnpm.overrides" was found in /Users/khoshbin/develop/asyar/src/built-in-extensions/clipboard-history/package.json. This will not take effect. You should configure "pnpm.overrides" at the root of the workspace instead.
+src/built-in-extensions/store            |  WARN  The field "pnpm.overrides" was found in /Users/khoshbin/develop/asyar/src/built-in-extensions/store/package.json. This will not take effect. You should configure "pnpm.overrides" at the root of the workspace instead.
+No projects matched the filters in "/Users/khoshbin/develop/asyar"
+You have specified a baseUrl and/or paths in your tsconfig.json which interferes with SvelteKit's auto-generated tsconfig.json. Remove it to avoid problems with intellisense. For path aliases, use `kit.alias` instead: https://svelte.dev/docs/kit/configuration#alias
+error when starting dev server:
+Error: Port 1420 is already in use
+    at Server.onError (file:///Users/khoshbin/develop/asyar/node_modules/.pnpm/vite@6.2.2_@types+node@22.14.1_jiti@2.4.2_lightningcss@1.29.2/node_modules/vite/dist/node/chunks/dep-B0fRCRkQ.js:30664:18)
+    at Server.emit (node:events:508:20)
+    at emitErrorNT (node:net:2044:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+ ELIFECYCLE  Command failed with exit code 1.
+       Error The "beforeDevCommand" terminated with a non-zero status code.
+ ELIFECYCLE  Command failed with exit code 1.
