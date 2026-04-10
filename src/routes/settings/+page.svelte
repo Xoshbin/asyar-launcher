@@ -7,8 +7,6 @@
   } from '../../components';
   import { SettingsHandler } from './settingsHandlers.svelte';
   import GeneralTab from './tabs/GeneralTab.svelte';
-  import ShortcutsTab from './tabs/ShortcutsTab.svelte';
-  import AppearanceTab from './tabs/AppearanceTab.svelte';
   import ExtensionsTab from './tabs/ExtensionsTab.svelte';
   import AboutTab from './tabs/AboutTab.svelte';
   import BackupTab from './tabs/BackupTab.svelte';
@@ -26,8 +24,6 @@ import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatt
 
   const settingsTabs = [
     { id: 'general', label: 'General', icon: 'settings' },
-    { id: 'shortcuts', label: 'Shortcuts', icon: 'keyboard' },
-    { id: 'appearance', label: 'Appearance', icon: 'palette' },
     { id: 'extensions', label: 'Extensions', icon: 'puzzle' },
     { id: 'backup', label: 'Backup', icon: 'cloud-upload' },
     { id: 'account', label: 'Account', icon: 'user' },
@@ -77,10 +73,6 @@ import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatt
       <div class="settings-content-inner">
         {#if handler.activeTab === 'general'}
           <GeneralTab {handler} />
-        {:else if handler.activeTab === 'shortcuts'}
-          <ShortcutsTab {handler} />
-        {:else if handler.activeTab === 'appearance'}
-          <AppearanceTab {handler} />
         {:else if handler.activeTab === 'extensions'}
           <ExtensionsTab {handler} />
         {:else if handler.activeTab === 'backup'}
