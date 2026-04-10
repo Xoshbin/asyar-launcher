@@ -14,29 +14,12 @@
     installExtensionFromFile,
   } from "../../../lib/ipc/commands";
   import ShellTrustManager from "../../../components/settings/ShellTrustManager.svelte";
-  import { SettingsRow, SettingsRangeSlider } from "../../../components";
-  import { snippetService, enabledPersistence } from '../../../built-in-features/snippets/snippetService';
 
   let {
     handler,
   }: {
     handler: SettingsHandler;
   } = $props();
-
-  let snippetsEnabled = $state(enabledPersistence.loadSync(true));
-  let snippetsToggleError = $state<string | null>(null);
-
-  async function toggleSnippets() {
-    const desiredState = !snippetsEnabled;
-    const result = await snippetService.setEnabled(desiredState);
-    if (result.ok) {
-      snippetsEnabled = desiredState;
-      enabledPersistence.save(snippetsEnabled);
-      snippetsToggleError = null;
-    } else {
-      snippetsToggleError = result.error || 'Failed to change expansion setting';
-    }
-  }
 
   let updateCount = $derived(extensionUpdateService.updateCount);
   let isUpdatingAll = $derived(extensionUpdateService.isUpdatingAll);
@@ -305,30 +288,6 @@
       </div>
     {/if}
   </div>
-</SettingsSection>
-
-<SettingsSection title="Built-in Feature Settings">
-  <SettingsRow
-    label="Calculator: Currency Refresh Interval"
-    description="How often to update exchange rates in the background (hours)"
-  >
-    <SettingsRangeSlider
-      min={1} max={24} step={1}
-      value={handler.settings.calculator?.refreshInterval || 6}
-      suffix="h"
-      onchange={(v) => handler.updateCalculatorRefreshInterval(v)}
-    />
-  </SettingsRow>
-  <SettingsRow
-    label="Background Expansion"
-    description="Automatically expand text snippets as you type. Requires Accessibility permission on macOS."
-    noBorder
-  >
-    <Toggle checked={snippetsEnabled} onchange={toggleSnippets} />
-  </SettingsRow>
-  {#if snippetsToggleError}
-    <div style="padding: 0 0 var(--space-4); font-size: var(--font-size-sm); color: var(--accent-danger);">{snippetsToggleError}</div>
-  {/if}
 </SettingsSection>
 
 <ShellTrustManager />
