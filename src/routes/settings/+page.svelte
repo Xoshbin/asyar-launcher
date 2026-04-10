@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import {
-    TabGroup,
     LoadingState,
-    DialogHost
+    DialogHost,
+    SettingsTopBar
   } from '../../components';
   import { SettingsHandler } from './settingsHandlers.svelte';
   import GeneralTab from './tabs/GeneralTab.svelte';
@@ -24,15 +24,14 @@ import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatt
 
   const handler = new SettingsHandler();
 
-  const tabs = [
-    { id: 'general', label: 'General' },
-    { id: 'shortcuts', label: 'Shortcuts' },
-    { id: 'appearance', label: 'Appearance' },
-    { id: 'extensions', label: 'Extensions' },
-    { id: 'backup', label: 'Backup' },
-    { id: 'account', label: 'Account' },
-    { id: 'about', label: 'About' },
-
+  const settingsTabs = [
+    { id: 'general', label: 'General', icon: 'settings' },
+    { id: 'shortcuts', label: 'Shortcuts', icon: 'keyboard' },
+    { id: 'appearance', label: 'Appearance', icon: 'palette' },
+    { id: 'extensions', label: 'Extensions', icon: 'puzzle' },
+    { id: 'backup', label: 'Backup', icon: 'cloud-upload' },
+    { id: 'account', label: 'Account', icon: 'user' },
+    { id: 'about', label: 'About', icon: 'info' },
   ];
 
   onMount(async () => {
@@ -64,46 +63,62 @@ import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatt
     <LoadingState message="Loading settings..." />
   </div>
 {:else}
-  {#if handler.initError}
-    <div class="fixed top-0 left-0 right-0 p-2 text-center z-50" style="background: color-mix(in srgb, var(--accent-warning) 15%, var(--bg-primary)); color: var(--text-primary);">
-      ⚠️ {handler.initError}
-    </div>
-  {/if}
-  
-  <div class="container mx-auto p-6 max-w-5xl h-screen pt-{handler.initError ? '12' : '6'}">
-    <div class="flex gap-8 h-full">
-      <!-- Sidebar Navigation -->
-      <aside class="w-56 flex-shrink-0 overflow-y-auto">
-        <nav class="sticky top-6">
-          <TabGroup
-            tabs={tabs}
-            bind:activeTab={handler.activeTab}
-            variant="sidebar"
-          />
-        </nav>
-      </aside>
+  <div class="settings-page">
+    <header class="settings-header">
+      {#if handler.initError}
+        <div class="p-2 text-center" style="background: color-mix(in srgb, var(--accent-warning) 15%, var(--bg-primary)); color: var(--text-primary);">
+          ⚠️ {handler.initError}
+        </div>
+      {/if}
+      <SettingsTopBar tabs={settingsTabs} bind:activeTab={handler.activeTab} />
+    </header>
 
-      <!-- Main Content -->
-      <main class="flex-1 custom-scrollbar space-y-6 overflow-y-auto pb-6">
+    <main class="settings-content custom-scrollbar">
+      <div class="settings-content-inner">
         {#if handler.activeTab === 'general'}
-              <GeneralTab {handler} />
-            {:else if handler.activeTab === 'shortcuts'}
-              <ShortcutsTab {handler} />
-            {:else if handler.activeTab === 'appearance'}
-              <AppearanceTab {handler} />
-            {:else if handler.activeTab === 'extensions'}
-              <ExtensionsTab {handler} />
-            {:else if handler.activeTab === 'backup'}
-              <BackupTab {handler} />
-            {:else if handler.activeTab === 'account'}
-              <AccountTab {handler} />
-            {:else if handler.activeTab === 'about'}
-              <AboutTab {handler} />
-
-            {/if}
-      </main>
-    </div>
+          <GeneralTab {handler} />
+        {:else if handler.activeTab === 'shortcuts'}
+          <ShortcutsTab {handler} />
+        {:else if handler.activeTab === 'appearance'}
+          <AppearanceTab {handler} />
+        {:else if handler.activeTab === 'extensions'}
+          <ExtensionsTab {handler} />
+        {:else if handler.activeTab === 'backup'}
+          <BackupTab {handler} />
+        {:else if handler.activeTab === 'account'}
+          <AccountTab {handler} />
+        {:else if handler.activeTab === 'about'}
+          <AboutTab {handler} />
+        {/if}
+      </div>
+    </main>
   </div>
 {/if}
 
 <DialogHost />
+
+<style>
+  .settings-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  .settings-header {
+    flex-shrink: 0;
+  }
+
+  .settings-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-8) var(--space-6);
+  }
+
+  .settings-content-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+</style>
