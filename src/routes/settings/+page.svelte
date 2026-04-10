@@ -11,6 +11,7 @@
   import AboutTab from './tabs/AboutTab.svelte';
   import BackupTab from './tabs/BackupTab.svelte';
   import AccountTab from './tabs/AccountTab.svelte';
+  import AdvancedTab from './tabs/AdvancedTab.svelte';
   import { authService } from '../../services/auth/authService.svelte';
 import { registerProfileProviders } from '../../services/appInitializer';
 import { cloudSyncService } from '../../services/sync/cloudSyncService.svelte';
@@ -27,6 +28,7 @@ import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatt
     { id: 'extensions', label: 'Extensions', icon: 'puzzle' },
     { id: 'backup', label: 'Backup', icon: 'cloud-upload' },
     { id: 'account', label: 'Account', icon: 'user' },
+    { id: 'advanced', label: 'Advanced', icon: 'layers' },
     { id: 'about', label: 'About', icon: 'info' },
   ];
 
@@ -79,6 +81,8 @@ import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatt
           <BackupTab {handler} />
         {:else if handler.activeTab === 'account'}
           <AccountTab {handler} />
+        {:else if handler.activeTab === 'advanced'}
+          <AdvancedTab {handler} />
         {:else if handler.activeTab === 'about'}
           <AboutTab {handler} />
         {/if}
