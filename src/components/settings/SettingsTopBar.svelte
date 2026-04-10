@@ -10,7 +10,7 @@
   } = $props();
 </script>
 
-<nav class="settings-top-bar" role="tablist">
+<div class="settings-top-bar" role="tablist">
   {#each tabs as tab}
     <button
       class="tab-item"
@@ -25,7 +25,7 @@
       <span class="label">{tab.label}</span>
     </button>
   {/each}
-</nav>
+</div>
 
 <style>
   .settings-top-bar {

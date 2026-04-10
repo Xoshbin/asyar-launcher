@@ -138,13 +138,12 @@
 
     {#if updateStatus !== "idle"}
       <div
-        class="mt-6 p-4 rounded-lg {updateStatus === 'error'
-          ? 'bg-red-500/10 text-red-400'
-          : updateStatus === 'up-to-date'
-            ? 'bg-green-500/10 text-green-400'
-            : updateStatus === 'installed'
-              ? 'bg-green-500/10 text-green-400'
-              : 'bg-blue-500/10 text-blue-400'}"
+        class="mt-6 p-4"
+        style="border-radius: var(--radius-md); {updateStatus === 'error'
+          ? 'background: color-mix(in srgb, var(--accent-danger) 12%, transparent); color: var(--accent-danger);'
+          : updateStatus === 'up-to-date' || updateStatus === 'installed'
+            ? 'background: color-mix(in srgb, var(--accent-success) 12%, transparent); color: var(--accent-success);'
+            : 'background: color-mix(in srgb, var(--accent-primary) 12%, transparent); color: var(--accent-primary);'}"
       >
         {#if updateStatus === "checking"}
           Checking for updates...

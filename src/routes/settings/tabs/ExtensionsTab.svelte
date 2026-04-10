@@ -16,12 +16,29 @@
   } from "../../../lib/ipc/commands";
   import ShellTrustManager from "../../../components/settings/ShellTrustManager.svelte";
   import ScheduledTasksSection from "../../../components/settings/ScheduledTasksSection.svelte";
+  import { SettingsRow, SettingsRangeSlider } from "../../../components";
+  import { snippetService, enabledPersistence } from '../../../built-in-features/snippets/snippetService';
 
   let {
     handler,
   }: {
     handler: SettingsHandler;
   } = $props();
+
+  let snippetsEnabled = $state(enabledPersistence.loadSync(true));
+  let snippetsToggleError = $state<string | null>(null);
+
+  async function toggleSnippets() {
+    const desiredState = !snippetsEnabled;
+    const result = await snippetService.setEnabled(desiredState);
+    if (result.ok) {
+      snippetsEnabled = desiredState;
+      enabledPersistence.save(snippetsEnabled);
+      snippetsToggleError = null;
+    } else {
+      snippetsToggleError = result.error || 'Failed to change expansion setting';
+    }
+  }
 
   let updateCount = $derived(extensionUpdateService.updateCount);
   let isUpdatingAll = $derived(extensionUpdateService.isUpdatingAll);
@@ -84,21 +101,12 @@
 
 <SettingsSection title="Installed Extensions">
   <div class="p-6">
-    <!-- Auto-update toggle -->
-    <div
-      class="flex items-center justify-between mb-4 p-3 rounded-lg"
-      style="background: var(--bg-secondary);"
+    <SettingsRow
+      label="Automatic Updates"
+      description="Extensions update silently in the background"
     >
-      <div>
-        <div class="font-medium text-sm text-[var(--text-primary)]">
-          Automatic Updates
-        </div>
-        <div class="text-xs text-[var(--text-secondary)]">
-          Extensions update silently in the background
-        </div>
-      </div>
       <Toggle checked={autoUpdate} onchange={toggleAutoUpdate} />
-    </div>
+    </SettingsRow>
     <div class="flex items-center justify-between mb-4 px-6">
       <button
         class="text-sm px-4 py-2 rounded-lg border border-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
@@ -316,6 +324,30 @@
       </div>
     {/if}
   </div>
+</SettingsSection>
+
+<SettingsSection title="Built-in Feature Settings">
+  <SettingsRow
+    label="Calculator: Currency Refresh Interval"
+    description="How often to update exchange rates in the background (hours)"
+  >
+    <SettingsRangeSlider
+      min={1} max={24} step={1}
+      value={handler.settings.calculator?.refreshInterval || 6}
+      suffix="h"
+      onchange={(v) => handler.updateCalculatorRefreshInterval(v)}
+    />
+  </SettingsRow>
+  <SettingsRow
+    label="Background Expansion"
+    description="Automatically expand text snippets as you type. Requires Accessibility permission on macOS."
+    noBorder
+  >
+    <Toggle checked={snippetsEnabled} onchange={toggleSnippets} />
+  </SettingsRow>
+  {#if snippetsToggleError}
+    <div style="padding: 0 0 var(--space-4); font-size: var(--font-size-sm); color: var(--accent-danger);">{snippetsToggleError}</div>
+  {/if}
 </SettingsSection>
 
 <ScheduledTasksSection />
