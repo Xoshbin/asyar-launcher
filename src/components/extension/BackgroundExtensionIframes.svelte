@@ -19,7 +19,7 @@
   // 3. Must NOT be the currently active full view (that one is in ExtensionViewContainer)
   // 4. Must NOT be built-in (those don't run in iframes)
   function hasScheduledCommands(manifest: ExtensionManifest): boolean {
-    return manifest.commands?.some((cmd: any) => cmd.schedule) ?? false;
+    return manifest.commands?.some(cmd => cmd.schedule != null) ?? false;
   }
 
   let backgroundExtensions = $derived(
