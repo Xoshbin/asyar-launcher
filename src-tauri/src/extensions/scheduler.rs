@@ -4,17 +4,17 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use log::warn;
 use serde::Serialize;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter};
 use tokio::task::JoinHandle;
 
 use crate::error::AppError;
-use super::{ExtensionRegistryState, ScheduleDeclaration};
+use super::ExtensionRegistryState;
 
 const MIN_INTERVAL_SECS: u64 = 60;
 const MAX_INTERVAL_SECS: u64 = 86400;
 
 pub fn validate_interval(seconds: u64) -> Result<u64, AppError> {
-    if seconds < MIN_INTERVAL_SECS || seconds > MAX_INTERVAL_SECS {
+    if !(MIN_INTERVAL_SECS..=MAX_INTERVAL_SECS).contains(&seconds) {
         return Err(AppError::Validation(format!(
             "Schedule interval must be between {} and {} seconds, got {}",
             MIN_INTERVAL_SECS, MAX_INTERVAL_SECS, seconds
