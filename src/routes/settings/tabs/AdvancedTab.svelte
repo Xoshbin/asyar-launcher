@@ -1,7 +1,7 @@
 <script lang="ts">
   import {
-    SettingsSection,
-    SettingsRow,
+    SettingsForm,
+    SettingsFormRow,
     SettingsRangeSlider,
     Toggle,
     SegmentedControl,
@@ -56,24 +56,21 @@
   });
 </script>
 
-<SettingsSection title="Search">
-  <SettingsRow
-    label="Extension results in search"
+<SettingsForm>
+  <SettingsFormRow
+    label="Extension Search"
     description="Allow extensions to contribute results in the search bar"
-    noBorder
   >
     <Toggle
       checked={handler.settings.search.enableExtensionSearch}
       onchange={() => handler.handleExtensionSearchToggle()}
     />
-  </SettingsRow>
-</SettingsSection>
+  </SettingsFormRow>
 
-<SettingsSection title="Behavior">
-  <SettingsRow
-    label="Escape key behavior"
+  <SettingsFormRow
+    label="Escape Key"
+    separator
     description="What happens when you press Escape while a view is open"
-    noBorder
   >
     <SegmentedControl
       options={[
@@ -82,24 +79,19 @@
       ]}
       bind:value={escapeValue}
     />
-  </SettingsRow>
-</SettingsSection>
+  </SettingsFormRow>
 
-<SettingsSection title="Extensions">
-  <SettingsRow
-    label="Automatic Updates"
+  <SettingsFormRow
+    label="Auto Updates"
+    separator
     description="Extensions update silently in the background"
-    noBorder
   >
     <Toggle checked={autoUpdate} onchange={toggleAutoUpdate} />
-  </SettingsRow>
-</SettingsSection>
+  </SettingsFormRow>
 
-<ScheduledTasksSection />
-
-<SettingsSection title="Built-in Feature Settings">
-  <SettingsRow
-    label="Calculator: Currency Refresh Interval"
+  <SettingsFormRow
+    label="Currency Refresh"
+    separator
     description="How often to update exchange rates in the background (hours)"
   >
     <SettingsRangeSlider
@@ -108,18 +100,21 @@
       suffix="h"
       onchange={(v) => handler.updateCalculatorRefreshInterval(v)}
     />
-  </SettingsRow>
-  <SettingsRow
-    label="Background Expansion"
+  </SettingsFormRow>
+
+  <SettingsFormRow
+    label="Text Expansion"
     description="Automatically expand text snippets as you type. Requires Accessibility permission on macOS."
-    noBorder
   >
     <Toggle checked={snippetsEnabled} onchange={toggleSnippets} />
-  </SettingsRow>
-  {#if snippetsToggleError}
-    <div style="padding: 0 0 var(--space-4); font-size: var(--font-size-sm); color: var(--accent-danger);">{snippetsToggleError}</div>
-  {/if}
-</SettingsSection>
+  </SettingsFormRow>
+</SettingsForm>
+
+{#if snippetsToggleError}
+  <div class="error-message">{snippetsToggleError}</div>
+{/if}
+
+<ScheduledTasksSection />
 
 {#if handler.saveError && handler.saveMessage}
   <div class="error-message">{handler.saveMessage}</div>
