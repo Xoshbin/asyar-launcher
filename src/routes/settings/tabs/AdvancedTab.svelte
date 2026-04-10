@@ -6,12 +6,26 @@
     SegmentedControl,
   } from '../../../components';
   import type { SettingsHandler } from '../settingsHandlers.svelte';
+  import { settingsService } from '../../../services/settings/settingsService.svelte';
+  import ScheduledTasksSection from '../../../components/settings/ScheduledTasksSection.svelte';
 
   let {
     handler,
   }: {
     handler: SettingsHandler;
   } = $props();
+
+  let autoUpdate = $derived(
+    settingsService.currentSettings.extensions?.autoUpdate !== false,
+  );
+
+  async function toggleAutoUpdate() {
+    const newValue = !autoUpdate;
+    await settingsService.updateSettings('extensions', {
+      ...settingsService.currentSettings.extensions,
+      autoUpdate: newValue,
+    });
+  }
 
   let escapeValue = $state<'close-window' | 'go-back'>('close-window');
   $effect(() => {
@@ -53,6 +67,18 @@
     />
   </SettingsRow>
 </SettingsSection>
+
+<SettingsSection title="Extensions">
+  <SettingsRow
+    label="Automatic Updates"
+    description="Extensions update silently in the background"
+    noBorder
+  >
+    <Toggle checked={autoUpdate} onchange={toggleAutoUpdate} />
+  </SettingsRow>
+</SettingsSection>
+
+<ScheduledTasksSection />
 
 {#if handler.saveError && handler.saveMessage}
   <div class="error-message">{handler.saveMessage}</div>

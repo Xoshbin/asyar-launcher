@@ -9,13 +9,11 @@
   import type { SettingsHandler } from "../settingsHandlers.svelte";
   import { extensionStateManager } from "../../../services/extension/extensionStateManager.svelte";
   import { extensionUpdateService } from "../../../services/extension/extensionUpdateService.svelte";
-  import { settingsService } from "../../../services/settings/settingsService.svelte";
   import {
     showOpenExtensionDialog,
     installExtensionFromFile,
   } from "../../../lib/ipc/commands";
   import ShellTrustManager from "../../../components/settings/ShellTrustManager.svelte";
-  import ScheduledTasksSection from "../../../components/settings/ScheduledTasksSection.svelte";
   import { SettingsRow, SettingsRangeSlider } from "../../../components";
   import { snippetService, enabledPersistence } from '../../../built-in-features/snippets/snippetService';
 
@@ -42,17 +40,6 @@
 
   let updateCount = $derived(extensionUpdateService.updateCount);
   let isUpdatingAll = $derived(extensionUpdateService.isUpdatingAll);
-  let autoUpdate = $derived(
-    settingsService.currentSettings.extensions?.autoUpdate !== false,
-  );
-
-  async function toggleAutoUpdate() {
-    const newValue = !autoUpdate;
-    await settingsService.updateSettings("extensions", {
-      ...settingsService.currentSettings.extensions,
-      autoUpdate: newValue,
-    });
-  }
 
   async function handleUpdateExtension(extensionId: string) {
     const update = extensionUpdateService.getUpdateForExtension(extensionId);
@@ -101,12 +88,6 @@
 
 <SettingsSection title="Installed Extensions">
   <div class="p-6">
-    <SettingsRow
-      label="Automatic Updates"
-      description="Extensions update silently in the background"
-    >
-      <Toggle checked={autoUpdate} onchange={toggleAutoUpdate} />
-    </SettingsRow>
     <div class="flex items-center justify-between mb-4 px-6">
       <button
         class="text-sm px-4 py-2 rounded-lg border border-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
@@ -349,7 +330,5 @@
     <div style="padding: 0 0 var(--space-4); font-size: var(--font-size-sm); color: var(--accent-danger);">{snippetsToggleError}</div>
   {/if}
 </SettingsSection>
-
-<ScheduledTasksSection />
 
 <ShellTrustManager />
