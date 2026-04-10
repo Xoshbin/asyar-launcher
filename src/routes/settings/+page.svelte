@@ -26,8 +26,8 @@
 
   const settingsTabs = [
     { id: 'general', label: 'General', icon: 'settings' },
-    { id: 'ai', label: 'AI', icon: 'ai-chat' },
     { id: 'extensions', label: 'Extensions', icon: 'puzzle' },
+    { id: 'ai', label: 'AI', icon: 'ai-chat' },
     { id: 'backup', label: 'Backup', icon: 'cloud-upload' },
     { id: 'account', label: 'Account', icon: 'user' },
     { id: 'advanced', label: 'Advanced', icon: 'layers' },
