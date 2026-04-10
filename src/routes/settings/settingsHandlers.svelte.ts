@@ -57,6 +57,14 @@ export const DEFAULT_SETTINGS: AppSettings = {
   updates: {
     channel: "stable" as const,
   },
+  ai: {
+    provider: 'openai' as const,
+    apiKey: '',
+    model: 'gpt-4o-mini',
+    temperature: 0.7,
+    maxTokens: 2048,
+    allowExtensionUse: true,
+  },
 };
 
 export class SettingsHandler {

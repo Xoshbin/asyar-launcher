@@ -7,17 +7,18 @@
   } from '../../components';
   import { SettingsHandler } from './settingsHandlers.svelte';
   import GeneralTab from './tabs/GeneralTab.svelte';
+  import AiTab from './tabs/AiTab.svelte';
   import ExtensionsTab from './tabs/ExtensionsTab.svelte';
   import AboutTab from './tabs/AboutTab.svelte';
   import BackupTab from './tabs/BackupTab.svelte';
   import AccountTab from './tabs/AccountTab.svelte';
   import AdvancedTab from './tabs/AdvancedTab.svelte';
   import { authService } from '../../services/auth/authService.svelte';
-import { registerProfileProviders } from '../../services/appInitializer';
-import { cloudSyncService } from '../../services/sync/cloudSyncService.svelte';
-import { shortcutStore } from '../../built-in-features/shortcuts/shortcutStore.svelte';
-import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatter';
-
+  import { registerProfileProviders } from '../../services/appInitializer';
+  import { cloudSyncService } from '../../services/sync/cloudSyncService.svelte';
+  import { shortcutStore } from '../../built-in-features/shortcuts/shortcutStore.svelte';
+  import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatter';
+  import { listen } from '@tauri-apps/api/event';
 
   import '../../resources/styles/style.css';
 
@@ -25,6 +26,7 @@ import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatt
 
   const settingsTabs = [
     { id: 'general', label: 'General', icon: 'settings' },
+    { id: 'ai', label: 'AI', icon: 'ai-chat' },
     { id: 'extensions', label: 'Extensions', icon: 'puzzle' },
     { id: 'backup', label: 'Backup', icon: 'cloud-upload' },
     { id: 'account', label: 'Account', icon: 'user' },
@@ -32,23 +34,23 @@ import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatt
     { id: 'about', label: 'About', icon: 'info' },
   ];
 
+  let unlistenNavTab: (() => void) | undefined;
+
   onMount(async () => {
     handler.init();
-    // Trade-off: Settings is a separate Tauri webview with its own JS context.
-    // authService/cloudSyncService are re-initialized here because they are
-    // per-context singletons. Rust AuthState is the single source of truth;
-    // both windows hydrate from it. Changes in one window don't auto-propagate
-    // to the other — acceptable because the settings window is short-lived.
     await authService.init();
-    await shortcutStore.init(); // load item shortcuts so conflict checker works
+    await shortcutStore.init();
     await initValidKeys();
-    registerProfileProviders(); // needed for sync operations in settings window
-    cloudSyncService.checkStatus().catch(() => {}); // populate lastSyncedAt display
+    registerProfileProviders();
+    cloudSyncService.checkStatus().catch(() => {});
+    unlistenNavTab = await listen<{ tab: string }>('asyar:navigate-settings-tab', (e) => {
+      handler.activeTab = e.payload.tab;
+    });
   });
-
 
   onDestroy(() => {
     handler.destroy();
+    unlistenNavTab?.();
   });
 </script>
 
@@ -75,6 +77,8 @@ import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatt
       <div class="settings-content-inner" class:full-bleed-inner={handler.activeTab === 'extensions'}>
         {#if handler.activeTab === 'general'}
           <GeneralTab {handler} />
+        {:else if handler.activeTab === 'ai'}
+          <AiTab />
         {:else if handler.activeTab === 'extensions'}
           <ExtensionsTab {handler} />
         {:else if handler.activeTab === 'backup'}
