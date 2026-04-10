@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { IProviderPlugin, ProviderConfig, ChatParams, ChatMessage } from '../../services/ai/IProviderPlugin'
-import { streamChat, stopStream, _clearAllStreamsForTesting } from '../../services/ai/aiEngine'
+
+// aiEngine imports fetch from @tauri-apps/plugin-http — must be mocked before import
+vi.mock('@tauri-apps/plugin-http', () => ({
+  fetch: (...args: unknown[]) => (globalThis.fetch as (...a: unknown[]) => unknown)(...args),
+}))
+
+const { streamChat, stopStream, _clearAllStreamsForTesting } = await import('../../services/ai/aiEngine')
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -78,7 +84,7 @@ const openaiPlugin = makePlugin((line) => {
 })
 
 const config: ProviderConfig = { enabled: true, apiKey: 'sk-test' }
-const params: ChatParams = { temperature: 0.7, maxTokens: 1024 }
+const params: ChatParams = { modelId: 'gpt-4', temperature: 0.7, maxTokens: 1024 }
 const msgs: ChatMessage[] = [{ id: '1', role: 'user', content: 'hi', timestamp: 0 }]
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
