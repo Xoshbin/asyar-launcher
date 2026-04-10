@@ -52,6 +52,7 @@
   }
 </script>
 
+<div class="no-separators">
 <SettingsForm>
   <SettingsFormRow label="Provider">
     <select
@@ -122,6 +123,7 @@
     />
   </SettingsFormRow>
 </SettingsForm>
+</div>
 
 <div class="advanced-section">
   <button class="text-label advanced-toggle" onclick={() => (showAdvanced = !showAdvanced)}>
@@ -129,6 +131,7 @@
   </button>
 
   {#if showAdvanced}
+    <div class="no-separators">
     <SettingsForm>
       <SettingsFormRow label="Temperature {temperature.toFixed(2)}">
         <input
@@ -163,10 +166,19 @@
         ></textarea>
       </SettingsFormRow>
     </SettingsForm>
+    </div>
   {/if}
 </div>
 
 <style>
+  .no-separators :global(.form-row) {
+    border-bottom: none;
+  }
+
+  .no-separators :global(.form-row.separator) {
+    border-top: none;
+  }
+
   .key-row {
     display: flex;
     gap: var(--space-2);
