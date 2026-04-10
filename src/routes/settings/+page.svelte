@@ -107,7 +107,7 @@ import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatt
   .settings-content {
     flex: 1;
     overflow-y: auto;
-    padding: var(--space-8) var(--space-6);
+    padding: var(--space-5) var(--space-6);
   }
 
   .settings-content-inner {
@@ -115,6 +115,6 @@ import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatt
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: var(--space-6);
+    gap: var(--space-4);
   }
 </style>

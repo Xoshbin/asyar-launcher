@@ -20,7 +20,7 @@
       onclick={() => activeTab = tab.id}
     >
       <div class="icon-container">
-        <Icon name={tab.icon} size={18} />
+        <Icon name={tab.icon} size={22} />
       </div>
       <span class="label">{tab.label}</span>
     </button>
@@ -67,18 +67,17 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-md);
-    background: var(--bg-tertiary);
-    border: 2px solid transparent;
-    transition: border-color var(--transition-normal);
+    background: transparent;
+    transition: background-color var(--transition-normal);
   }
 
   .tab-item.active .icon-container {
-    border-color: var(--accent-primary);
+    background: var(--bg-selected);
   }
 
   .label {
-    font-size: var(--font-size-2xs);
-    font-weight: 500;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
     font-family: var(--font-ui);
   }
 </style>

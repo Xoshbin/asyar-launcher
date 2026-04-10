@@ -23,7 +23,7 @@
   .form-row {
     display: flex;
     align-items: center;
-    padding: var(--space-5) var(--space-6);
+    padding: var(--space-3) var(--space-6);
     border-bottom: 1px solid var(--separator);
     gap: var(--space-6);
   }
@@ -34,7 +34,7 @@
 
   .form-row.separator {
     border-top: 1px solid var(--separator);
-    padding-top: var(--space-6);
+    padding-top: var(--space-4);
   }
 
   .row-label {
