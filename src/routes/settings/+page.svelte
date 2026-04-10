@@ -71,8 +71,8 @@ import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatt
       <SettingsTopBar tabs={settingsTabs} bind:activeTab={handler.activeTab} />
     </header>
 
-    <main class="settings-content custom-scrollbar">
-      <div class="settings-content-inner">
+    <main class="settings-content custom-scrollbar" class:full-bleed={handler.activeTab === 'extensions'}>
+      <div class="settings-content-inner" class:full-bleed-inner={handler.activeTab === 'extensions'}>
         {#if handler.activeTab === 'general'}
           <GeneralTab {handler} />
         {:else if handler.activeTab === 'extensions'}
@@ -110,11 +110,23 @@ import { initValidKeys } from '../../built-in-features/shortcuts/shortcutFormatt
     padding: var(--space-5) var(--space-6);
   }
 
+  .settings-content.full-bleed {
+    padding: 0;
+    overflow: hidden;
+  }
+
   .settings-content-inner {
     max-width: 720px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+  }
+
+  .settings-content-inner.full-bleed-inner {
+    max-width: none;
+    margin: 0;
+    height: 100%;
+    gap: 0;
   }
 </style>

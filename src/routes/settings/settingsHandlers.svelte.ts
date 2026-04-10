@@ -8,6 +8,7 @@ import { feedbackService } from '../../services/feedback/feedbackService.svelte'
 import type { AppSettings } from '../../services/settings/types/AppSettingsType';
 import { logService } from '../../services/log/logService';
 import type { CompatibilityStatus } from '../../types/CompatibilityStatus';
+import type { ExtensionCommand } from 'asyar-sdk';
 
 // Define interface for extension items with enabled status
 export interface ExtensionItem {
@@ -21,6 +22,7 @@ export interface ExtensionItem {
   enabled?: boolean;
   id?: string;
   compatibility?: CompatibilityStatus;
+  commands?: ExtensionCommand[];
 }
 
 // Initialize with default settings first
@@ -143,10 +145,22 @@ export class SettingsHandler {
   async loadExtensions() {
     this.isLoadingExtensions = true;
     this.extensionError = '';
-    
+
     try {
       const allExtensions = await extensionManager.getAllExtensionsWithState();
-      this.extensions = allExtensions.filter(ext => !ext.isBuiltIn);
+      const seen = new Set<string>();
+      this.extensions = allExtensions
+        .filter((ext: any) => !ext.isBuiltIn)
+        .filter((ext: any) => {
+          const key = ext.id ?? ext.title;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .map((ext: any) => ({
+          ...ext,
+          commands: ext.commands ?? [],
+        }));
     } catch (error) {
       logService.error(`Failed to load extensions: ${error}`);
       this.extensionError = 'Failed to load extensions information.';
