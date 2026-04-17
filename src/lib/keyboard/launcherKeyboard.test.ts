@@ -814,6 +814,28 @@ describe('launcherKeyboard characterization tests', () => {
 
         expect(searchStores.selectedIndex).toBe(1);
       });
+
+      it('Enter with an active context chip is NOT swallowed (chip activation path must run)', () => {
+        // Simulates the bug: after Tab commits a context chip, localSearchValue
+        // is '' but activeContext is set. isCompactIdle MUST be false in that
+        // state so Enter can reach the context-chip activation branch.
+        const deps = createMockDeps({
+          isCompactIdle: vi.fn(() => false), // verifies page.svelte computes it correctly
+          getActiveContext: vi.fn(() => ({
+            provider: { id: 'portal_test', display: { name: 'Test', icon: '🌐' }, type: 'url', triggers: ['Test'] },
+            query: 'hello',
+          } as any)),
+          getContextQuery: vi.fn(() => 'hello'),
+        });
+        const { handleKeydown } = createKeyboardHandlers(deps);
+        const event = createKeyEvent('Enter');
+
+        handleKeydown(event);
+
+        // The chip-activation branch must have been reached (not swallowed)
+        expect(contextModeService.activate).toHaveBeenCalledWith('portal_test', 'hello');
+        expect(contextModeService.updateQuery).toHaveBeenCalledWith('');
+      });
     });
 
     describe('Escape behavior', () => {

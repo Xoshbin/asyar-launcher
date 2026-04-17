@@ -86,6 +86,7 @@
     && !compactExpanded
     && !controller.localSearchValue
     && !controller.activeViewVal
+    && !controller.activeContext
   );
 
   $effect(() => {
