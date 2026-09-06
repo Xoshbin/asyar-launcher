@@ -30,7 +30,7 @@ impl ExtensionPermissionRegistry {
         }
     }
 
-    /// Returns Ok(()) if allowed. None caller = system/core call, always allowed.
+    /// Returns Ok(()) if allowed. None or "asyar" caller = system/core call, always allowed.
     pub fn check(
         &self,
         caller_extension_id: &Option<String>,
@@ -39,6 +39,9 @@ impl ExtensionPermissionRegistry {
         let Some(id) = caller_extension_id else {
             return Ok(());
         };
+        if id == "asyar" {
+            return Ok(());
+        }
         let registry = self.inner.lock().map_err(|_| AppError::Lock)?;
         let permissions = registry.get(id).ok_or_else(|| {
             AppError::Permission(format!(
@@ -1426,6 +1429,15 @@ mod tests {
         reg.unregister("ext.a");
         assert!(reg.check(&Some("ext.a".to_string()), "fs:watch").is_err());
         assert!(reg.args_for("ext.a", "fs:watch").is_none());
+    }
+
+    #[test]
+    fn check_allows_none_and_asyar_host() {
+        let reg = ExtensionPermissionRegistry::default();
+        assert!(reg.check(&None, "notifications:send").is_ok());
+        assert!(reg
+            .check(&Some("asyar".to_string()), "notifications:send")
+            .is_ok());
     }
 
     // ---- resolve_declared_permissions (register_extension_permissions'

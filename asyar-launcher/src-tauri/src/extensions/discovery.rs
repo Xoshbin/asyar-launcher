@@ -1914,6 +1914,15 @@ mod manifest_schema_tests {
                 path,
                 result.err()
             );
+            let manifest = result.unwrap();
+            for cmd in manifest.commands {
+                assert_ne!(
+                    cmd.component.as_deref(),
+                    Some("__TBD__"),
+                    "manifest at {:?} has placeholder component '__TBD__'",
+                    path
+                );
+            }
         }
     }
 

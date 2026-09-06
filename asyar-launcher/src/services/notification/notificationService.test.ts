@@ -82,6 +82,25 @@ describe('send', () => {
     });
   });
 
+  it('normalizes callerExtensionId "asyar" or null to null for system/core calls', async () => {
+    await makeSvc().send('asyar', { title: 'System Notification' });
+    expect(mockInvoke).toHaveBeenCalledWith(
+      'send_notification',
+      expect.objectContaining({
+        callerExtensionId: null,
+      }),
+    );
+
+    mockInvoke.mockClear();
+    await makeSvc().send(null as any, { title: 'System Notification 2' });
+    expect(mockInvoke).toHaveBeenCalledWith(
+      'send_notification',
+      expect.objectContaining({
+        callerExtensionId: null,
+      }),
+    );
+  });
+
   it('rejects actions missing required fields before the IPC call', async () => {
     await expect(
       makeSvc().send('org.asyar.test', {
