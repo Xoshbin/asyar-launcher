@@ -22,20 +22,23 @@ export class NotificationService {
     return permission === 'granted';
   }
 
-  async send(callerExtensionId: string, options: NotificationOptions): Promise<string> {
+  async send(callerExtensionId: string | null, options: NotificationOptions): Promise<string> {
     const normalisedActions = options.actions?.map(normaliseAction);
     const result = await commands.sendNotification({
       title: options.title,
       body: options.body,
       actions: normalisedActions,
-      callerExtensionId,
+      callerExtensionId: callerExtensionId === 'asyar' ? null : callerExtensionId,
     });
     if (result === null) throw new Error('send_notification failed');
     return result;
   }
 
-  async dismiss(callerExtensionId: string, notificationId: string): Promise<void> {
-    await commands.dismissNotification({ notificationId, callerExtensionId });
+  async dismiss(callerExtensionId: string | null, notificationId: string): Promise<void> {
+    await commands.dismissNotification({
+      notificationId,
+      callerExtensionId: callerExtensionId === 'asyar' ? null : callerExtensionId,
+    });
   }
 }
 

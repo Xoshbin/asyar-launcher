@@ -58,6 +58,16 @@ class StoreExtension implements Extension {
     }
   }
 
+  private sendNotification(options: { title: string; body: string }): void {
+    if (!import.meta.env.DEV && this.feedbackService) {
+      this.feedbackService
+        .sendBackground(options)
+        .catch((err) =>
+          this.logService?.warn(`[Store Extension] Failed to send notification: ${err}`),
+        );
+    }
+  }
+
   async initialize(context: ExtensionContext): Promise<void> {
     this.logService = context.getService<ILogService>('log');
     this.extensionManager = context.getService<IExtensionManager>('extensions');
@@ -85,12 +95,10 @@ class StoreExtension implements Extension {
   ): Promise<void> {
     if (!slug) {
       this.logService?.error('Install function called without a slug.');
-      if (!import.meta.env.DEV) {
-        this.feedbackService?.sendBackground({
-          title: 'Install Failed',
-          body: 'Could not determine which extension to install.',
-        });
-      }
+      this.sendNotification({
+        title: 'Install Failed',
+        body: 'Could not determine which extension to install.',
+      });
       return;
     }
     const displayName = name || slug; // Use name if provided, otherwise slug
@@ -175,12 +183,10 @@ class StoreExtension implements Extension {
       this.logService?.info(
         `Installation command invoked successfully for ${displayName}. App might reload extensions.`,
       );
-      if (!import.meta.env.DEV) {
-        this.feedbackService?.sendBackground({
-          title: 'Installation Started',
-          body: `Installation for ${displayName} initiated. App may reload.`,
-        });
-      }
+      this.sendNotification({
+        title: 'Installation Started',
+        body: `Installation for ${displayName} initiated. App may reload.`,
+      });
       try {
         await this.extensionManager?.reloadExtensions();
       } catch (err) {
@@ -228,12 +234,10 @@ class StoreExtension implements Extension {
       const errorMessage = typeof e === 'string' ? e : e?.message || String(e);
       this.logService?.error(`Installation failed for ${displayName}: ${errorMessage}`);
       await installProgress?.fail(`Failed to install ${displayName}`, errorMessage);
-      if (!import.meta.env.DEV) {
-        this.feedbackService?.sendBackground({
-          title: 'Installation Failed',
-          body: `Could not install ${displayName}. ${errorMessage}`,
-        });
-      }
+      this.sendNotification({
+        title: 'Installation Failed',
+        body: `Could not install ${displayName}. ${errorMessage}`,
+      });
       throw e;
     } finally {
       store?.setInstallingSlug(null);
@@ -265,12 +269,10 @@ class StoreExtension implements Extension {
     try {
       await commands.uninstallExtension(extensionId.toString());
       this.logService?.info(`Uninstall command invoked successfully for ${displayName}.`);
-      if (!import.meta.env.DEV) {
-        this.feedbackService?.sendBackground({
-          title: 'Uninstall Complete',
-          body: `${displayName} has been removed.`,
-        });
-      }
+      this.sendNotification({
+        title: 'Uninstall Complete',
+        body: `${displayName} has been removed.`,
+      });
       try {
         await this.extensionManager?.reloadExtensions();
       } catch (err) {
@@ -287,12 +289,10 @@ class StoreExtension implements Extension {
       const errorMessage = typeof e === 'string' ? e : e?.message || String(e);
       this.logService?.error(`Uninstall failed for ${displayName}: ${errorMessage}`);
       await uninstallProgress?.fail(`Failed to uninstall ${displayName}`, errorMessage);
-      if (!import.meta.env.DEV) {
-        this.feedbackService?.sendBackground({
-          title: 'Uninstall Failed',
-          body: `Could not uninstall ${displayName}. ${errorMessage}`,
-        });
-      }
+      this.sendNotification({
+        title: 'Uninstall Failed',
+        body: `Could not uninstall ${displayName}. ${errorMessage}`,
+      });
       throw e;
     } finally {
       store?.setUninstallingSlug(null);
@@ -330,12 +330,10 @@ class StoreExtension implements Extension {
         window.dispatchEvent(
           new CustomEvent('store-extension-updated', { detail: { slug, id: extensionId } }),
         );
-        if (!import.meta.env.DEV) {
-          this.feedbackService?.sendBackground({
-            title: 'Update Complete',
-            body: `${displayName} updated to v${update.latestVersion}.`,
-          });
-        }
+        this.sendNotification({
+          title: 'Update Complete',
+          body: `${displayName} updated to v${update.latestVersion}.`,
+        });
         await updateProgress?.succeed(`${displayName} updated to v${update.latestVersion}`);
       } else {
         await updateProgress?.fail(`Failed to update ${displayName}`);
@@ -661,7 +659,7 @@ class StoreExtension implements Extension {
                   this.logService?.warn(
                     'Uninstall selected action executed, but no item is selected in state anymore.',
                   );
-                  this.feedbackService?.sendBackground({
+                  this.sendNotification({
                     title: 'Uninstall Failed',
                     body: 'No extension selected.',
                   });
@@ -695,7 +693,7 @@ class StoreExtension implements Extension {
                   this.logService?.warn(
                     'Install selected action executed, but no item is selected in state anymore.',
                   );
-                  this.feedbackService?.sendBackground({
+                  this.sendNotification({
                     title: 'Install Failed',
                     body: 'No extension selected.',
                   });

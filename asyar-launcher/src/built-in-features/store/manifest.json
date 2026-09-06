@@ -7,6 +7,7 @@
   "icon": "icon:store",
   "type": "extension",
   "searchable": true,
+  "permissions": ["notifications:send"],
   "commands": [
     {
       "id": "browse",
@@ -15,7 +16,7 @@
       "description": "Find and install new extensions",
       "icon": "icon:store",
       "mode": "view",
-      "component": "__TBD__"
+      "component": "DefaultView"
     }
   ],
   "walkthrough": [

@@ -19,9 +19,15 @@
     extensionManager.getManifestById ? extensionManager.getManifestById(extensionId) : null,
   );
   const module = $derived(extensionManager.getLoadedExtensionModule(extensionId));
-  const ActiveComponent = $derived(
-    isBuiltIn ? (module?.[viewName] ?? module?.default?.[viewName] ?? module?.default) : null,
-  );
+  const ActiveComponent = $derived.by(() => {
+    if (!isBuiltIn || !module) return null;
+    const direct = module[viewName] ?? module.default?.[viewName];
+    if (typeof direct === 'function') return direct;
+    if (viewName === 'DefaultView' && typeof module.default === 'function') {
+      return module.default;
+    }
+    return null;
+  });
 
   // Auto-declare/clear the searchbar accessory dropdown for the active
   // view-mode command. The manifest's command is matched by `component`
