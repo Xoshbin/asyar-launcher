@@ -107,18 +107,18 @@ pub fn open_application_path<R: tauri::Runtime>(
 }
 
 /// Retrieves metadata about the currently focused application.
-pub fn get_frontmost_application() -> Result<FrontmostApplication, AppError> {
+pub fn get_frontmost_application() -> Result<Option<FrontmostApplication>, AppError> {
     #[cfg(target_os = "macos")]
     {
         if let Some((name, id, path, title)) =
             crate::platform::macos::get_frontmost_application_metadata()
         {
-            return Ok(FrontmostApplication {
+            return Ok(Some(FrontmostApplication {
                 name,
                 bundle_id: Some(id),
                 path: if path.is_empty() { None } else { Some(path) },
                 window_title: Some(title),
-            });
+            }));
         }
     }
 
@@ -127,18 +127,30 @@ pub fn get_frontmost_application() -> Result<FrontmostApplication, AppError> {
         if let Some((name, path, title)) =
             crate::platform::windows::get_frontmost_application_metadata()
         {
-            return Ok(FrontmostApplication {
+            return Ok(Some(FrontmostApplication {
                 name,
                 bundle_id: None,
                 path: Some(path),
                 window_title: Some(title),
-            });
+            }));
         }
     }
 
-    Err(AppError::Platform(
-        "Failed to retrieve frontmost application metadata".to_string(),
-    ))
+    #[cfg(target_os = "linux")]
+    {
+        if let Some((name, bundle_id, path, title)) =
+            crate::platform::linux::get_frontmost_application_metadata()
+        {
+            return Ok(Some(FrontmostApplication {
+                name,
+                bundle_id,
+                path,
+                window_title: title,
+            }));
+        }
+    }
+
+    Ok(None)
 }
 
 /// Scans for applications in default and extra paths, diffs against the search index,
@@ -1887,5 +1899,11 @@ mod tests {
 
         assert!(matches!(error, AppError::Platform(_)));
         assert!(error.to_string().contains("Example App.desktop"));
+    }
+
+    #[test]
+    fn get_frontmost_application_returns_ok() {
+        let result = get_frontmost_application();
+        assert!(result.is_ok());
     }
 }

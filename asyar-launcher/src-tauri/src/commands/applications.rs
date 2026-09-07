@@ -48,7 +48,7 @@ pub async fn list_applications(
 
 /// Retrieves metadata about the currently focused application.
 #[tauri::command]
-pub async fn get_frontmost_application() -> Result<FrontmostApplication, AppError> {
+pub async fn get_frontmost_application() -> Result<Option<FrontmostApplication>, AppError> {
     service::get_frontmost_application()
 }
 

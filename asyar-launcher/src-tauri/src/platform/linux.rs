@@ -308,6 +308,138 @@ pub fn extract_icon(path: &Path) -> Option<Vec<u8>> {
     std::fs::read(resolved).ok()
 }
 
+/// Pure helper: parse X11 `WM_CLASS` property payload (`<instance>\0<class>\0`).
+/// Returns `(instance_name, class_name)`.
+pub fn parse_wm_class(bytes: &[u8]) -> Option<(String, String)> {
+    let mut parts = bytes
+        .split(|&b| b == 0)
+        .map(|slice| String::from_utf8_lossy(slice).trim().to_string())
+        .filter(|s| !s.is_empty());
+
+    let instance = parts.next()?;
+    let class = parts.next().unwrap_or_else(|| instance.clone());
+    Some((instance, class))
+}
+
+/// Pure helper: parse X11 window title from property bytes.
+pub fn parse_wm_name(bytes: &[u8]) -> Option<String> {
+    let title = String::from_utf8_lossy(bytes)
+        .trim_matches(|c: char| c == '\0' || c.is_whitespace())
+        .to_string();
+    if title.is_empty() {
+        None
+    } else {
+        Some(title)
+    }
+}
+
+/// Pure helper: resolves an application display name from class name, instance name, or executable name.
+pub fn resolve_app_name(
+    class_name: Option<&str>,
+    instance_name: Option<&str>,
+    exe_name: Option<&str>,
+) -> Option<String> {
+    fn clean_str(s: Option<&str>) -> Option<&str> {
+        s.map(str::trim).filter(|t| !t.is_empty())
+    }
+
+    if let Some(cls) = clean_str(class_name) {
+        return Some(cls.to_string());
+    }
+    if let Some(inst) = clean_str(instance_name) {
+        return Some(inst.to_string());
+    }
+    if let Some(exe) = clean_str(exe_name) {
+        return Some(exe.to_string());
+    }
+    None
+}
+
+/// Retrieves metadata about the currently focused application under Linux via X11.
+/// Returns `(name, bundle_id, path, window_title)`.
+#[cfg(target_os = "linux")]
+pub fn get_frontmost_application_metadata(
+) -> Option<(String, Option<String>, Option<String>, Option<String>)> {
+    use x11rb::connection::Connection as _;
+    use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _};
+
+    let (conn, screen_num) = x11rb::connect(None).ok()?;
+    let root = conn.setup().roots.get(screen_num)?.root;
+
+    let net_active_reply = conn.intern_atom(false, b"_NET_ACTIVE_WINDOW").ok()?;
+    let net_wm_pid_reply = conn.intern_atom(false, b"_NET_WM_PID").ok()?;
+    let net_wm_name_reply = conn.intern_atom(false, b"_NET_WM_NAME").ok()?;
+    let utf8_string_reply = conn.intern_atom(false, b"UTF8_STRING").ok()?;
+
+    let net_active = net_active_reply.reply().ok()?.atom;
+    let net_wm_pid = net_wm_pid_reply.reply().ok()?.atom;
+    let net_wm_name = net_wm_name_reply.reply().ok()?.atom;
+    let utf8_string = utf8_string_reply.reply().ok()?.atom;
+
+    let active_prop = conn
+        .get_property(false, root, net_active, AtomEnum::WINDOW, 0, 1)
+        .ok()?
+        .reply()
+        .ok()?;
+
+    let win = active_prop
+        .value32()
+        .and_then(|mut it| it.next())
+        .unwrap_or(0);
+    if win == 0 {
+        return None;
+    }
+
+    // 1. Window title (_NET_WM_NAME with fallback to WM_NAME)
+    let window_title = conn
+        .get_property(false, win, net_wm_name, utf8_string, 0, 1024)
+        .ok()
+        .and_then(|c| c.reply().ok())
+        .and_then(|r| parse_wm_name(&r.value))
+        .or_else(|| {
+            conn.get_property(false, win, AtomEnum::WM_NAME, AtomEnum::STRING, 0, 1024)
+                .ok()
+                .and_then(|c| c.reply().ok())
+                .and_then(|r| parse_wm_name(&r.value))
+        });
+
+    // 2. WM_CLASS (instance and class names)
+    let wm_class = conn
+        .get_property(false, win, AtomEnum::WM_CLASS, AtomEnum::STRING, 0, 1024)
+        .ok()
+        .and_then(|c| c.reply().ok())
+        .and_then(|r| parse_wm_class(&r.value));
+
+    // 3. PID (_NET_WM_PID)
+    let pid = conn
+        .get_property(false, win, net_wm_pid, AtomEnum::CARDINAL, 0, 1)
+        .ok()
+        .and_then(|c| c.reply().ok())
+        .and_then(|r| r.value32().and_then(|mut it| it.next()));
+
+    // 4. Executable path from /proc/{pid}/exe
+    let exe_path = pid.and_then(|p| {
+        std::fs::read_link(format!("/proc/{p}/exe"))
+            .ok()
+            .map(|pb| pb.to_string_lossy().into_owned())
+    });
+
+    let exe_name = exe_path
+        .as_deref()
+        .and_then(|p| std::path::Path::new(p).file_name().and_then(|n| n.to_str()));
+
+    let (instance_name, class_name) = match wm_class {
+        Some((inst, cls)) => (Some(inst), Some(cls)),
+        None => (None, None),
+    };
+
+    let name = resolve_app_name(class_name.as_deref(), instance_name.as_deref(), exe_name)?;
+
+    let bundle_id = instance_name.or_else(|| exe_name.map(|s| s.to_string()));
+
+    Some((name, bundle_id, exe_path, window_title))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -366,5 +498,59 @@ mod tests {
     fn build_net_active_window_data_encodes_pager_source_and_timestamps() {
         let data = build_net_active_window_data(12345, 67890);
         assert_eq!(data, [2, 12345, 67890, 0, 0]);
+    }
+
+    #[test]
+    fn parse_wm_class_extracts_instance_and_class() {
+        let bytes = b"google-chrome\0Google-chrome\0";
+        assert_eq!(
+            parse_wm_class(bytes),
+            Some(("google-chrome".to_string(), "Google-chrome".to_string()))
+        );
+    }
+
+    #[test]
+    fn parse_wm_class_handles_single_entry() {
+        let bytes = b"slack\0";
+        assert_eq!(
+            parse_wm_class(bytes),
+            Some(("slack".to_string(), "slack".to_string()))
+        );
+    }
+
+    #[test]
+    fn parse_wm_class_returns_none_for_empty() {
+        assert_eq!(parse_wm_class(b""), None);
+        assert_eq!(parse_wm_class(b"\0\0"), None);
+    }
+
+    #[test]
+    fn parse_wm_name_extracts_clean_title() {
+        let bytes = b"My Window Title\0";
+        assert_eq!(parse_wm_name(bytes), Some("My Window Title".to_string()));
+    }
+
+    #[test]
+    fn parse_wm_name_returns_none_for_empty_or_whitespace() {
+        assert_eq!(parse_wm_name(b""), None);
+        assert_eq!(parse_wm_name(b"   \0"), None);
+    }
+
+    #[test]
+    fn resolve_app_name_prioritizes_class_then_instance_then_exe() {
+        assert_eq!(
+            resolve_app_name(Some("Code"), Some("code"), Some("code-bin")),
+            Some("Code".to_string())
+        );
+        assert_eq!(
+            resolve_app_name(None, Some("code"), Some("code-bin")),
+            Some("code".to_string())
+        );
+        assert_eq!(
+            resolve_app_name(None, None, Some("code-bin")),
+            Some("code-bin".to_string())
+        );
+        assert_eq!(resolve_app_name(None, None, None), None);
+        assert_eq!(resolve_app_name(Some("  "), Some(""), None), None);
     }
 }
