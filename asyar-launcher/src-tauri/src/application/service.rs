@@ -138,14 +138,12 @@ pub fn get_frontmost_application() -> Result<Option<FrontmostApplication>, AppEr
 
     #[cfg(target_os = "linux")]
     {
-        if let Some((name, bundle_id, path, title)) =
-            crate::platform::linux::get_frontmost_application_metadata()
-        {
+        if let Some(meta) = crate::platform::linux::get_frontmost_application_metadata() {
             return Ok(Some(FrontmostApplication {
-                name,
-                bundle_id,
-                path,
-                window_title: title,
+                name: meta.name,
+                bundle_id: meta.bundle_id,
+                path: meta.path,
+                window_title: meta.window_title,
             }));
         }
     }

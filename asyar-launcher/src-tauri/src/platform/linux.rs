@@ -355,11 +355,18 @@ pub fn resolve_app_name(
     None
 }
 
+/// Metadata describing the currently focused application on Linux.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LinuxFrontmostMetadata {
+    pub name: String,
+    pub bundle_id: Option<String>,
+    pub path: Option<String>,
+    pub window_title: Option<String>,
+}
+
 /// Retrieves metadata about the currently focused application under Linux via X11.
-/// Returns `(name, bundle_id, path, window_title)`.
 #[cfg(target_os = "linux")]
-pub fn get_frontmost_application_metadata(
-) -> Option<(String, Option<String>, Option<String>, Option<String>)> {
+pub fn get_frontmost_application_metadata() -> Option<LinuxFrontmostMetadata> {
     use x11rb::connection::Connection as _;
     use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _};
 
@@ -437,7 +444,12 @@ pub fn get_frontmost_application_metadata(
 
     let bundle_id = instance_name.or_else(|| exe_name.map(|s| s.to_string()));
 
-    Some((name, bundle_id, exe_path, window_title))
+    Some(LinuxFrontmostMetadata {
+        name,
+        bundle_id,
+        path: exe_path,
+        window_title,
+    })
 }
 
 #[cfg(test)]
