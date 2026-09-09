@@ -15,7 +15,7 @@ export interface UninstallScanResult {
 }
 
 export async function getFrontmostApplication(): Promise<FrontmostApplication | null> {
-  return invokeSafe<FrontmostApplication>('get_frontmost_application');
+  return invokeSafe<FrontmostApplication>('get_frontmost_application', undefined, { silent: true });
 }
 
 export async function appIsRunning(bundleId: string): Promise<boolean | null> {
